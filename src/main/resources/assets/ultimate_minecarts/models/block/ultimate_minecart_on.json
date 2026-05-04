@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "5": "ultimate_minecarts:block/ultimate_minecart"
+  },
+  "elements": [
+    {
+      "from": [5, 4, 2.75],
+      "to": [11, 12, 2.75],
+      "light_emission": 15,
+      "rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 9.75]},
+      "faces": {
+        "north": {"uv": [0, 0, 5, 4], "texture": "#5", "cullface": "north"}
+      }
+    }
+  ]
+}

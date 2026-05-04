@@ -1,0 +1,12 @@
+{
+  "multipart": [
+    { "when": { "facing": "north" }, "apply": { "model": "ultimate_minecarts:block/ultimate_minecart" } },
+    { "when": { "facing": "south" }, "apply": { "model": "ultimate_minecarts:block/ultimate_minecart", "y": 180 } },
+    { "when": { "facing": "west" },  "apply": { "model": "ultimate_minecarts:block/ultimate_minecart", "y": 270 } },
+    { "when": { "facing": "east" },  "apply": { "model": "ultimate_minecarts:block/ultimate_minecart", "y": 90  } },
+    { "when": { "facing": "north", "lit": "true" }, "apply": { "model": "ultimate_minecarts:block/ultimate_minecart_on" } },
+    { "when": { "facing": "south", "lit": "true" }, "apply": { "model": "ultimate_minecarts:block/ultimate_minecart_on", "y": 180 } },
+    { "when": { "facing": "west",  "lit": "true" }, "apply": { "model": "ultimate_minecarts:block/ultimate_minecart_on", "y": 270 } },
+    { "when": { "facing": "east",  "lit": "true" }, "apply": { "model": "ultimate_minecarts:block/ultimate_minecart_on", "y": 90  } }
+  ]
+}

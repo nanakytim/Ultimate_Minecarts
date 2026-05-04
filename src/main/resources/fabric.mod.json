@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "ultimate_minecarts",
+  "version": "${version}",
+  "name": "Ultimate Minecarts",
+  "description": "Making Minecarts more viable for transportation",
+  "authors": [
+    "Nanaky"
+  ],
+  "contact": {
+    "homepage": "https://nanaky.net",
+    "issues": "https://github.com/nanaky/ultimate_minecarts/issues",
+    "sources": "https://github.com/nanaky/ultimate_minecarts"
+  },
+  "license": "Custom License",
+  "icon": "assets/ultimate_minecarts/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.nanaky.ultimate_minecarts.UltimateMinecarts"
+    ],
+    "client": [
+      "net.nanaky.ultimate_minecarts.client.UltimateMinecartsClient"
+    ],
+    "modmenu": [
+      "net.nanaky.ultimate_minecarts.client.UltimateMinecartsModMenu"
+    ]
+  },
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/class_1688": [
+        "net/nanaky/ultimate_minecarts/api/Linkable",
+        "net/nanaky/ultimate_minecarts/common/utils/MinecartPhysicsAccess"
+      ]
+    }
+  },
+  "mixins": [
+    "ultimate_minecarts.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~26.1",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+	"suggests": {
+		"modmenu": "*",
+		"cloth-config": "*"
+	}
+}

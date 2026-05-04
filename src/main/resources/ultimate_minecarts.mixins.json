@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.nanaky.ultimate_minecarts.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "AbstractMinecartEntityMixin",
+    "AbstractMinecartInvoker",
+    "EntityRemoveMixin",
+    "EntityShapeContextAccessor",
+    "EntityTrackerEntryMixin",
+    "FurnaceMinecartEntityMixin",
+    "StorageMinecartEntityMixin"
+  ],
+  "client": [
+    "ChainExtractRenderStateMixin",
+    "ChainRendererMixin",
+    "ChainRenderStateMixin",
+    "FuelBarRenderMixin",
+    "FuelExtractRenderStateMixin",
+    "FuelRenderStateMixin",
+    "FurnaceMinecartMixin",
+    "LanguageMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}
