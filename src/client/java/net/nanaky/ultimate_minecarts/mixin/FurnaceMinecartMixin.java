@@ -2,6 +2,7 @@ package net.nanaky.ultimate_minecarts.mixin;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -68,25 +69,25 @@ public abstract class FurnaceMinecartMixin {
     private void onInteract(Player player, InteractionHand hand, Vec3 location,
                             CallbackInfoReturnable<InteractionResult> cir) {
         MinecartFurnace cart = self();
-        if (!cart.level().isClientSide()) return;
+        if (cart.level().isClientSide()) return;
+        if (!(cart.level() instanceof ServerLevel serverLevel)) return;
 
         ItemStack itemStack = player.getItemInHand(hand);
         if (!itemStack.is(net.minecraft.tags.ItemTags.FURNACE_MINECART_FUEL)) return;
         if (fuel + 3600 > 32000) return;
 
-        cart.level().addParticle(ParticleTypes.LAVA,
+        serverLevel.sendParticles(ParticleTypes.LAVA,
             cart.getX(), cart.getY() + 0.5, cart.getZ(),
-            0.0, 0.0, 0.0);
-        cart.level().addParticle(ParticleTypes.LAVA,
+            1, 0.0, 0.0, 0.0, 0.0);
+        serverLevel.sendParticles(ParticleTypes.LAVA,
             cart.getX() + 0.15, cart.getY() + 0.4, cart.getZ() + 0.15,
-            0.3, 0.1, 0.3);
-        cart.level().playLocalSound(
+            1, 0.15, 0.05, 0.15, 0.3);
+
+        serverLevel.playSound(null,
             cart.getX(), cart.getY(), cart.getZ(),
             SoundEvents.FIRECHARGE_USE,
             SoundSource.NEUTRAL,
             0.6f,
-            1.7f + cart.getRandom().nextFloat() * 0.3f,
-            false
-        );
-    }
+            1.7f + cart.getRandom().nextFloat() * 0.3f);
+}
 }

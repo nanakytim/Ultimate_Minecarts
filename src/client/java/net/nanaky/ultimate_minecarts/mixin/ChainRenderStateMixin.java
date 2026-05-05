@@ -21,6 +21,7 @@ public class ChainRenderStateMixin implements ChainRenderStateAccessor {
     @Unique private double ultimate_minecarts$playerDX = 0;
     @Unique private double ultimate_minecarts$playerDY = 0;
     @Unique private double ultimate_minecarts$playerDZ = 0;
+    @Unique private boolean ultimate_minecarts$hasPendingPlayer = false;
 
     @Override public boolean ultimate_minecarts$hasParent()  { return ultimate_minecarts$hasParent; }
     @Override public double  ultimate_minecarts$parentX()    { return ultimate_minecarts$parentX; }
@@ -31,6 +32,7 @@ public class ChainRenderStateMixin implements ChainRenderStateAccessor {
     @Override public double ultimate_minecarts$playerDX() { return ultimate_minecarts$playerDX; }
     @Override public double ultimate_minecarts$playerDY() { return ultimate_minecarts$playerDY; }
     @Override public double ultimate_minecarts$playerDZ() { return ultimate_minecarts$playerDZ; }
+    @Override public boolean ultimate_minecarts$hasPendingPlayer() { return ultimate_minecarts$hasPendingPlayer; }
 
     @Override public void ultimate_minecarts$setHasParent(boolean v) { ultimate_minecarts$hasParent = v; }
     @Override public void ultimate_minecarts$setParentX(double v)    { ultimate_minecarts$parentX = v; }
@@ -41,4 +43,5 @@ public class ChainRenderStateMixin implements ChainRenderStateAccessor {
     @Override public void ultimate_minecarts$setPlayerDX(double v) { ultimate_minecarts$playerDX = v; }
     @Override public void ultimate_minecarts$setPlayerDY(double v) { ultimate_minecarts$playerDY = v; }
     @Override public void ultimate_minecarts$setPlayerDZ(double v) { ultimate_minecarts$playerDZ = v; }
+    @Override public void ultimate_minecarts$setHasPendingPlayer(boolean v) { ultimate_minecarts$hasPendingPlayer = v; }
 }

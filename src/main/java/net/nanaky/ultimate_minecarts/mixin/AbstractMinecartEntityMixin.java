@@ -101,11 +101,19 @@ public abstract class AbstractMinecartEntityMixin extends Entity
     @Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
     private void ultimate_minecarts$getMaxSpeed(ServerLevel level, CallbackInfoReturnable<Double> info) {
         if ((Object) this instanceof MinecartFurnace) return;
-        AbstractMinecart parent = getLinkedParent();
-        if (parent != null)
-            info.setReturnValue(((AbstractMinecartInvoker) parent).invokeGetMaxSpeed(level));
-        else
+        AbstractMinecart root = getLinkedParent();
+        int depth = 0;
+        while (root != null && !(root instanceof MinecartFurnace) && depth++ < 64) {
+            AbstractMinecart next = ((Linkable) root).getLinkedParent();
+            if (next == null) break;
+            root = next;
+        }
+
+        if (root instanceof MinecartFurnace) {
+            info.setReturnValue(((AbstractMinecartInvoker) root).invokeGetMaxSpeed(level));
+        } else {
             info.setReturnValue(UltimateMinecartsConfig.getOtherMinecartSpeed());
+        }
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("HEAD"))

@@ -2,7 +2,6 @@ package net.nanaky.ultimate_minecarts.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.MinecartRenderState;
@@ -12,9 +11,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.nanaky.ultimate_minecarts.UltimateMinecarts;
 import net.nanaky.ultimate_minecarts.api.ChainRenderStateAccessor;
 import org.joml.Matrix4f;
@@ -24,8 +21,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.UUID;
 
 @Mixin(targets = "net.minecraft.client.renderer.entity.EntityRenderer", priority = 900)
 public class ChainRendererMixin {
@@ -43,7 +38,6 @@ public class ChainRendererMixin {
         ChainRenderStateAccessor accessor = (ChainRenderStateAccessor)(Object) minecartState;
         int light = minecartState.lightCoords;
 
-        // --- Existing parent chain ---
         if (accessor.ultimate_minecarts$hasParent()) {
             float dx = (float) -accessor.ultimate_minecarts$parentX();
             float dy = (float) -accessor.ultimate_minecarts$parentY();
@@ -94,23 +88,8 @@ public class ChainRendererMixin {
             }
         }
 
-        // --- Pending link chain: cart → player ---
-        // Requires ultimate_minecarts$selfUUID() on ChainRenderStateAccessor,
-        // populated wherever you set parentX/Y/Z in your render state mixin.
-        Minecraft client = Minecraft.getInstance();
-        if (client.player == null || client.level == null) return;
+        if (!accessor.ultimate_minecarts$hasPendingPlayer()) return;
 
-        UUID selfUUID = accessor.ultimate_minecarts$selfUUID();
-        if (selfUUID == null) return;
-
-        UUID pendingUUID = null;
-        for (InteractionHand hand : InteractionHand.values()) {
-            UUID u = client.player.getItemInHand(hand).get(UltimateMinecarts.PARENT_ID);
-            if (u != null) { pendingUUID = u; break; }
-        }
-        if (!selfUUID.equals(pendingUUID)) return;
-
-        // Delta from cart (origin in pose space) to player
         float pdx = (float) -accessor.ultimate_minecarts$playerDX();
         float pdy = (float) -accessor.ultimate_minecarts$playerDY();
         float pdz = (float) -accessor.ultimate_minecarts$playerDZ();
@@ -125,9 +104,7 @@ public class ChainRendererMixin {
         double pvAngle = Math.asin(Mth.clamp(pdy / pdist, -1f, 1f));
 
         RenderType pendingLayer = RenderTypes.entityCutout(
-        ultimate_minecarts$chainTexture(client.player.getItemInHand(InteractionHand.MAIN_HAND).get(UltimateMinecarts.PARENT_ID) != null
-            ? client.player.getItemInHand(InteractionHand.MAIN_HAND).getItem()
-            : client.player.getItemInHand(InteractionHand.OFF_HAND).getItem()));
+            ultimate_minecarts$chainTexture(accessor.ultimate_minecarts$chainItem()));
 
         final float finalPLength = plength;
         final int finalPLight = light;

@@ -11,6 +11,8 @@ import net.nanaky.ultimate_minecarts.api.IFurnaceMinecart;
 import net.nanaky.ultimate_minecarts.api.Linkable;
 import net.nanaky.ultimate_minecarts.common.packets.ClientboundSyncChainedMinecartPacket;
 import net.nanaky.ultimate_minecarts.common.packets.ClientboundSyncFurnaceFuelPacket;
+import net.nanaky.ultimate_minecarts.common.packets.ClientboundSyncPendingChainPacket;
+
 import org.jetbrains.annotations.Nullable;
 
 public class ClientPacketHandlers {
@@ -41,6 +43,18 @@ public class ClientPacketHandlers {
                 Entity entity = world.getEntity(payload.entityId());
                 if (entity instanceof IFurnaceMinecart furnace)
                     furnace.ultimate_minecarts$setFuel(payload.fuel());
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(
+                ClientboundSyncPendingChainPacket.TYPE, (payload, context) -> {
+            context.client().execute(() -> {
+                if (payload.targetCartUUID().isPresent()) {
+                    Item chain = BuiltInRegistries.ITEM.byId(payload.chainItemId());
+                    PendingChainTracker.set(payload.playerEntityId(), payload.targetCartUUID().get(), chain);
+                } else {
+                    PendingChainTracker.clear(payload.playerEntityId());
+                }
             });
         });
     }

@@ -3,6 +3,8 @@ package net.nanaky.ultimate_minecarts;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,6 +23,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
 import net.minecraft.world.entity.vehicle.minecart.MinecartFurnace;
@@ -33,11 +36,10 @@ import net.nanaky.ultimate_minecarts.api.Linkable;
 import net.nanaky.ultimate_minecarts.common.blocks.FurnaceMinecartModel;
 import net.nanaky.ultimate_minecarts.common.packets.ClientboundSyncChainedMinecartPacket;
 import net.nanaky.ultimate_minecarts.common.packets.ClientboundSyncFurnaceFuelPacket;
+import net.nanaky.ultimate_minecarts.common.packets.ClientboundSyncPendingChainPacket;
 import net.nanaky.ultimate_minecarts.common.utils.XtraCodecs;
-import net.nanaky.ultimate_minecarts.mixin.FurnaceMinecartEntityMixin;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Optional;
 import java.util.UUID;
 
 public class UltimateMinecarts implements ModInitializer {
@@ -47,7 +49,26 @@ public class UltimateMinecarts implements ModInitializer {
     public static ResourceKey<DamageType> MINECART_DAMAGE;
 
     public static final TagKey<Item> LINKABLE_CHAINS = TagKey.create(
-    Registries.ITEM, id("linkable_chains"));
+        Registries.ITEM, id("linkable_chains"));
+
+    private static boolean wouldCreateCycle(AbstractMinecart parent, AbstractMinecart child) {
+        AbstractMinecart cursor = parent;
+        int depth = 0;
+        while (cursor != null && depth++ < 64) {
+            if (cursor.getUUID().equals(child.getUUID())) return true;
+            cursor = ((Linkable) cursor).getLinkedParent();
+        }
+        return false;
+    }
+
+    private static void broadcastPendingClear(Player player, ItemStack stack) {
+        if (!(player instanceof ServerPlayer sp)) return;
+        int chainItemId = BuiltInRegistries.ITEM.getId(stack.getItem());
+        ClientboundSyncPendingChainPacket pkt =
+            new ClientboundSyncPendingChainPacket(sp.getId(), Optional.empty(), chainItemId);
+        PlayerLookup.tracking(sp).forEach(other -> ServerPlayNetworking.send(other, pkt));
+        ServerPlayNetworking.send(sp, pkt);
+    }
 
     @Override
     public void onInitialize() {
@@ -70,6 +91,7 @@ public class UltimateMinecarts implements ModInitializer {
 
         ClientboundSyncChainedMinecartPacket.register();
         ClientboundSyncFurnaceFuelPacket.register();
+        ClientboundSyncPendingChainPacket.register();
 
         UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (!(entity instanceof Minecart ridableCart))
@@ -114,7 +136,7 @@ public class UltimateMinecarts implements ModInitializer {
             return InteractionResult.SUCCESS;
         });
 
-       UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+        UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (!(entity instanceof MinecartFurnace cart)) return InteractionResult.PASS;
             if (player.getItemInHand(hand).getItem() != Items.WATER_BUCKET) return InteractionResult.PASS;
             if (!(world instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
@@ -143,6 +165,7 @@ public class UltimateMinecarts implements ModInitializer {
             if (uuid != null && !cart.getUUID().equals(uuid)) {
                 Entity found = server.getEntity(uuid);
                 if (!(found instanceof AbstractMinecart A)) {
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
@@ -154,6 +177,7 @@ public class UltimateMinecarts implements ModInitializer {
                 if (A.distanceTo(B) > 3) {
                     if (player instanceof ServerPlayer sp)
                         sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_too_far"));
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
@@ -170,69 +194,62 @@ public class UltimateMinecarts implements ModInitializer {
                 boolean bIsFurnace = B instanceof MinecartFurnace;
 
                 if (aIsFurnace && bIsFurnace) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_two_furnaces"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
                 if (aIsFurnace && aIsP) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
                 if (bIsFurnace && bIsP) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
                 if (aIsFurnace && aIsC) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
                 if (bIsFurnace && bIsC) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
                 if (aIsC && bIsC) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
 
-                AbstractMinecart parent, child;
+                AbstractMinecart parentCart, childCart;
 
                 if (aIsN && bIsN) {
-                    if (aIsFurnace)      { parent = A; child = B; }
-                    else if (bIsFurnace) { parent = B; child = A; }
-                    else                 { parent = B; child = A; }
-                    ((Linkable) child).setLinkedChain(stack.getItem());
-                    Linkable.setParentChild((Linkable) parent, (Linkable) child);
+                    if (aIsFurnace)      { parentCart = A; childCart = B; }
+                    else if (bIsFurnace) { parentCart = B; childCart = A; }
+                    else                 { parentCart = B; childCart = A; }
+                    ((Linkable) childCart).setLinkedChain(stack.getItem());
+                    Linkable.setParentChild((Linkable) parentCart, (Linkable) childCart);
 
                 } else if (aIsN && bIsC) {
                     if (aIsFurnace) {
-                        if (player instanceof ServerPlayer sp)
-                            //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                            world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                             SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                        broadcastPendingClear(player, stack);
                         stack.remove(PARENT_ID);
                         return InteractionResult.SUCCESS;
                     }
@@ -241,10 +258,9 @@ public class UltimateMinecarts implements ModInitializer {
 
                 } else if (aIsC && bIsN) {
                     if (bIsFurnace) {
-                        if (player instanceof ServerPlayer sp)
-                            //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                            world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                             SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                        broadcastPendingClear(player, stack);
                         stack.remove(PARENT_ID);
                         return InteractionResult.SUCCESS;
                     }
@@ -256,22 +272,27 @@ public class UltimateMinecarts implements ModInitializer {
                     Linkable.setParentChild(lB, lA);
 
                 } else if (aIsP && aIsFurnace && bIsN) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
 
                 } else if (aIsP && !aIsFurnace && bIsC) {
+                    if (wouldCreateCycle(A, B) || wouldCreateCycle(B, A)) {
+                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                            SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                        broadcastPendingClear(player, stack);
+                        stack.remove(PARENT_ID);
+                        return InteractionResult.SUCCESS;
+                    }
                     lA.setLinkedChain(stack.getItem());
                     Linkable.setParentChild(lB, lA);
 
                 } else if (aIsP && aIsFurnace && bIsC) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
 
@@ -280,53 +301,65 @@ public class UltimateMinecarts implements ModInitializer {
                     Linkable.setParentChild(lA, lB);
 
                 } else if (aIsN && bIsP && bIsFurnace) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
 
                 } else if (aIsC && bIsP && !bIsFurnace) {
+                    if (wouldCreateCycle(A, B) || wouldCreateCycle(B, A)) {
+                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                            SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                        broadcastPendingClear(player, stack);
+                        stack.remove(PARENT_ID);
+                        return InteractionResult.SUCCESS;
+                    }
                     lB.setLinkedChain(stack.getItem());
                     Linkable.setParentChild(lA, lB);
 
                 } else if (aIsC && bIsP && bIsFurnace) {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
-                                SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                        SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
 
                 } else {
-                    if (player instanceof ServerPlayer sp)
-                        //sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_complex"));
-                        world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
+                    world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                    broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;
                 }
 
                 world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.CHAIN_PLACE, SoundSource.NEUTRAL, 1f, 1f);
+                broadcastPendingClear(player, stack);
                 if (!player.isCreative()) stack.shrink(1);
                 stack.remove(PARENT_ID);
 
             } else if (uuid != null && cart.getUUID().equals(uuid)) {
                 world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.COPPER_BREAK, SoundSource.NEUTRAL, 1f, 1f);
+                broadcastPendingClear(player, stack);
                 stack.remove(PARENT_ID);
 
             } else if (uuid == null) {
                 stack.set(PARENT_ID, cart.getUUID());
                 world.playSound(null, cart.getX(), cart.getY(), cart.getZ(),
                         SoundEvents.CHAIN_HIT, SoundSource.NEUTRAL, 1f, 1f);
+                int chainItemId = BuiltInRegistries.ITEM.getId(stack.getItem());
+                ClientboundSyncPendingChainPacket pkt = new ClientboundSyncPendingChainPacket(
+                    player.getId(), Optional.of(cart.getUUID()), chainItemId);
+                if (player instanceof ServerPlayer sp) {
+                    PlayerLookup.tracking(sp).forEach(other -> ServerPlayNetworking.send(other, pkt));
+                    ServerPlayNetworking.send(sp, pkt);
+                }
             }
             return InteractionResult.SUCCESS;
         });
 
-    
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 for (InteractionHand hand : InteractionHand.values()) {
@@ -336,12 +369,9 @@ public class UltimateMinecarts implements ModInitializer {
 
                     Entity cart = ((ServerLevel) player.level()).getEntity(uuid);
                     if (cart == null || player.distanceTo(cart) > 4) {
-                        Item chainItem = stack.getItem();
+                        broadcastPendingClear(player, stack);
                         stack.remove(PARENT_ID);
                         if (cart != null) {
-                            //net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
-                            //    cart.level(), cart.getX(), cart.getY(), cart.getZ(), new ItemStack(chainItem));
-                            //((ServerLevel) cart.level()).addFreshEntity(drop);
                             cart.level().playSound(null, cart.blockPosition(),
                                 SoundEvents.CHAIN_BREAK, SoundSource.NEUTRAL, 1f, 1f);
                         }

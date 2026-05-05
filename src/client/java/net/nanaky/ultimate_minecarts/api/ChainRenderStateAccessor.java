@@ -14,6 +14,7 @@ public interface ChainRenderStateAccessor {
     double ultimate_minecarts$playerDX();
     double ultimate_minecarts$playerDY();
     double ultimate_minecarts$playerDZ();
+    boolean ultimate_minecarts$hasPendingPlayer();
 
     void ultimate_minecarts$setHasParent(boolean v);
     void ultimate_minecarts$setParentX(double v);
@@ -24,4 +25,5 @@ public interface ChainRenderStateAccessor {
     void ultimate_minecarts$setPlayerDX(double v);
     void ultimate_minecarts$setPlayerDY(double v);
     void ultimate_minecarts$setPlayerDZ(double v);
+    void ultimate_minecarts$setHasPendingPlayer(boolean v);
 }
