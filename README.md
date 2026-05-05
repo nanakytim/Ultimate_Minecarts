@@ -1,5 +1,6 @@
 ### This Mod completely overhauls Minecarts, especially the Furnace Minecart.
-icon
+<img width="360" height="360" alt="ultimate_minecart" src="https://github.com/user-attachments/assets/2519ad0d-dbd8-4b80-a4ca-6c02fd7a08a9" />
+
 ****
 # 🚂 FEATURES
 ### 🔗 Linking mechanic
