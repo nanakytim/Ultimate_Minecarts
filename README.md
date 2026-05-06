@@ -1,5 +1,6 @@
+<img width="512" height="512" alt="ultimate_minecart" src="https://github.com/user-attachments/assets/d367673f-e310-450b-88c8-5cf9a26f5e16" />
+
 ### This Mod completely overhauls Minecarts, especially the Furnace Minecart.
-<img width="360" height="360" alt="ultimate_minecart" src="https://github.com/user-attachments/assets/2519ad0d-dbd8-4b80-a4ca-6c02fd7a08a9" />
 
 ****
 # 🚂 FEATURES
