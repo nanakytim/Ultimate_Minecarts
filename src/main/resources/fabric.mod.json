@@ -13,7 +13,7 @@
     "sources": "https://github.com/nanaky/ultimate_minecarts"
   },
   "license": "Custom License",
-  "icon": "assets/ultimate_minecarts/icon.png",
+  "icon": "icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
