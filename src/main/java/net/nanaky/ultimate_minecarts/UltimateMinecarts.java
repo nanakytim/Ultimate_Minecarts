@@ -23,6 +23,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.minecart.Minecart;
@@ -104,10 +105,10 @@ public class UltimateMinecarts implements ModInitializer {
             Item item = stack.getItem();
 
             EntityType<? extends AbstractMinecart> targetType = null;
-            if (item == Items.FURNACE) targetType = EntityType.FURNACE_MINECART;
-            if (item == Items.CHEST)   targetType = EntityType.CHEST_MINECART;
-            if (item == Items.TNT)     targetType = EntityType.TNT_MINECART;
-            if (item == Items.HOPPER)  targetType = EntityType.HOPPER_MINECART;
+            if (item == Items.FURNACE) targetType = EntityTypes.FURNACE_MINECART;
+            if (item == Items.CHEST)   targetType = EntityTypes.CHEST_MINECART;
+            if (item == Items.TNT)     targetType = EntityTypes.TNT_MINECART;
+            if (item == Items.HOPPER)  targetType = EntityTypes.HOPPER_MINECART;
 
             if (targetType == null || !(world instanceof ServerLevel serverLevel))
                 return InteractionResult.PASS;

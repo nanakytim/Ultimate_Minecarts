@@ -73,7 +73,7 @@ public final class FuelBarRenderer {
 
         poseStack.pushPose();
         poseStack.translate(0, nameTagY - 0.5, 0);
-        poseStack.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
+        poseStack.mulPose(Minecraft.getInstance().gameRenderer.mainCamera().rotation());
         poseStack.scale(0.025f, -0.025f, 0.025f);
         poseStack.translate(0, 0, 32f);
 
