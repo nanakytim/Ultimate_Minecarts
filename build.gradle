@@ -5,7 +5,7 @@ plugins {
 
 def javaVersion = 25
 
-version = project.version
+version = project.mod_version
 group = project.maven_group
 
 base {
