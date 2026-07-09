@@ -27,6 +27,13 @@ public class UltimateMinecartsConfig {
     public double furnaceMinecartSpeed = 32;
     public double otherMinecartSpeed = 16;
 
+    public float chainResistance = 4f;
+    public float ironChainDistance = 1.2f;
+    public float copperChainDistance = 1.6f;
+    public float exposedCopperChainDistance = 2f;
+    public float weatheredCopperChainDistance = 2.6f;
+    public float oxidizedCopperChainDistance = 3.2f;
+
     public static UltimateMinecartsConfig get() {
         return INSTANCE;
     }
@@ -60,5 +67,19 @@ public class UltimateMinecartsConfig {
 
     public static double getOtherMinecartSpeed() {
         return Math.max(0.1, INSTANCE.otherMinecartSpeed * 0.05);
+    }
+
+    public static float getChainDistance(String chainPath) {
+        return switch (chainPath) {
+            case "copper_chain",
+                "waxed_copper_chain"           -> INSTANCE.copperChainDistance;
+            case "exposed_copper_chain",
+                "waxed_exposed_copper_chain"   -> INSTANCE.exposedCopperChainDistance;
+            case "weathered_copper_chain",
+                "waxed_weathered_copper_chain" -> INSTANCE.weatheredCopperChainDistance;
+            case "oxidized_copper_chain",
+                "waxed_oxidized_copper_chain"  -> INSTANCE.oxidizedCopperChainDistance;
+            default                              -> INSTANCE.ironChainDistance;
+        };
     }
 }
