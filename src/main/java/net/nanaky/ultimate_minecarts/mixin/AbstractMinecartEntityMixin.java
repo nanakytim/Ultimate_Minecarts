@@ -259,17 +259,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity
     @Unique
     private static float ultimate_minecarts$chainDistance(Item chain) {
         String path = BuiltInRegistries.ITEM.getKey(chain).getPath();
-        return switch (path) {
-            case "copper_chain",
-                 "waxed_copper_chain"           -> 1.6f;
-            case "exposed_copper_chain",
-                 "waxed_exposed_copper_chain"   -> 2f;
-            case "weathered_copper_chain",
-                 "waxed_weathered_copper_chain" -> 2.6f;
-            case "oxidized_copper_chain",
-                 "waxed_oxidized_copper_chain"  -> 3.2f;
-            default                              -> 1.2f;
-        };
+        return UltimateMinecartsConfig.getChainDistance(path);
     }
 
     @Unique
@@ -279,7 +269,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity
             float targetDist = ultimate_minecarts$chainDistance(((Linkable) this).getLinkedChain());
             double distance = parent.distanceTo(this) - 1;
 
-            if (distance <= targetDist + 4) {
+            if (distance <= targetDist + UltimateMinecartsConfig.get().chainResistance) {
                 Vec3 parentVel = parent.getDeltaMovement();
                 double parentSpeed = parentVel.horizontalDistance();
                 final double minSpeed = 0.005;
