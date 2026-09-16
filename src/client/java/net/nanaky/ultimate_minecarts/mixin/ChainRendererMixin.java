@@ -58,8 +58,8 @@ public class ChainRendererMixin {
                     final int finalLight = light;
 
                     stack.pushPose();
-                    stack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-(float)hAngle - 90f)));
-                    stack.mulPose(new Quaternionf().rotationX((float) vAngle));
+                    stack.mulPose(new Matrix4f().rotation(new Quaternionf().rotationY((float) Math.toRadians(-(float)hAngle - 90f))));
+                    stack.mulPose(new Matrix4f().rotation(new Quaternionf().rotationX((float) vAngle)));
                     stack.translate(0, 0, 0.5);
 
                     collector.submitCustomGeometry(stack, chainLayer, (pose, vc) -> {
@@ -72,7 +72,7 @@ public class ChainRendererMixin {
                     });
 
                     stack.translate(0.19, 0.19, 0);
-                    stack.mulPose(new Quaternionf().rotationZ((float) Math.toRadians(90)));
+                    stack.mulPose(new Matrix4f().rotation(new Quaternionf().rotationZ((float) Math.toRadians(90))));
 
                     collector.submitCustomGeometry(stack, chainLayer, (pose, vc) -> {
                         Matrix4f m = pose.pose();
@@ -110,8 +110,8 @@ public class ChainRendererMixin {
         final int finalPLight = light;
 
         stack.pushPose();
-        stack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-(float)phAngle - 90f)));
-        stack.mulPose(new Quaternionf().rotationX((float) pvAngle));
+        stack.mulPose(new Matrix4f().rotation(new Quaternionf().rotationY((float) Math.toRadians(-(float)phAngle - 90f))));
+        stack.mulPose(new Matrix4f().rotation(new Quaternionf().rotationX((float) pvAngle)));
         stack.translate(0, 0, 0.5);
 
         collector.submitCustomGeometry(stack, pendingLayer, (pose, vc) -> {
@@ -124,7 +124,7 @@ public class ChainRendererMixin {
         });
 
         stack.translate(0.19, 0.19, 0);
-        stack.mulPose(new Quaternionf().rotationZ((float) Math.toRadians(90)));
+        stack.mulPose(new Matrix4f().rotation(new Quaternionf().rotationZ((float) Math.toRadians(90))));
 
         collector.submitCustomGeometry(stack, pendingLayer, (pose, vc) -> {
             Matrix4f m = pose.pose();

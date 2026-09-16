@@ -176,8 +176,6 @@ public class UltimateMinecarts implements ModInitializer {
                 Linkable lB = (Linkable) B;
 
                 if (A.distanceTo(B) > 3) {
-                    if (player instanceof ServerPlayer sp)
-                        sp.sendSystemMessage(Component.translatable(MOD_ID + ".cant_link_too_far"));
                     broadcastPendingClear(player, stack);
                     stack.remove(PARENT_ID);
                     return InteractionResult.SUCCESS;

@@ -230,7 +230,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity
 
             if (!(other instanceof LivingEntity living)) continue;
             if (!living.isAlive() || living.isPassenger()) continue;
-            if (living.invulnerableTime > 0) continue;
+            if (living.getInvulnerableTime() > 0) continue;
             if (ultimate_minecarts$graceTicks > 0) continue;
 
             Vec3 cartDir = ultimate_minecarts$preTick_velocity;
@@ -246,8 +246,8 @@ public abstract class AbstractMinecartEntityMixin extends Entity
                     knockDir.z * knockSpeed
             );
 
-            living.hurtMarked = true;
-            living.invulnerableTime = 0;
+            living.syncVelocity = true;
+            living.setInvulnerableTime(0);
             living.hurt(
                 level().damageSources().source(
                     UltimateMinecarts.MINECART_DAMAGE, this, getFirstPassenger()),

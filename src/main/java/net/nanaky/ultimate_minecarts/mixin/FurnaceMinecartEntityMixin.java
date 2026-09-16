@@ -3,6 +3,7 @@ package net.nanaky.ultimate_minecarts.mixin;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,13 +16,20 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.minecart.MinecartFurnace;
 import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.component.CookingFuel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.FuelValues;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
 import net.minecraft.world.phys.Vec3;
 import net.nanaky.ultimate_minecarts.UltimateMinecartsConfig;
 import net.nanaky.ultimate_minecarts.api.IFurnaceMinecart;
@@ -37,6 +45,8 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+
+import java.util.Optional;
 
 @Mixin(MinecartFurnace.class)
 public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implements IFurnaceMinecart {
@@ -84,6 +94,27 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implem
                     getZ() + (random.nextFloat() - 0.5) * 1.0,
                     1, 0.0, 0.08, 0.0, 0.0);
             }
+    }
+
+    @Unique
+    private LootContext ultimate_minecarts$getFuelLootContext(ServerLevel serverLevel) {
+        BlockPos pos = blockPosition();
+        BlockState furnaceState = Blocks.FURNACE.defaultBlockState();
+        FurnaceBlockEntity proxyFurnace = new FurnaceBlockEntity(pos, furnaceState);
+        return new LootContext.Builder(
+                new LootParams.Builder(serverLevel)
+                    .withParameter(LootContextParams.BLOCK_STATE, furnaceState)
+                    .withParameter(LootContextParams.BLOCK_ENTITY, proxyFurnace)
+                    .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                    .withParameter(LootContextParams.CONTAINER, proxyFurnace)
+                    .create(LootContextParamSets.CONTAINER_PROCESS)
+            )
+            .create(Optional.empty());
+    }
+
+    @Unique
+    public double ultimate_minecarts$getCurrentSpeed() {
+        return ultimate_minecarts$currentSpeed;
     }
 
     protected FurnaceMinecartEntityMixin(EntityType<?> entityType, Level level) {
@@ -213,10 +244,10 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implem
         at = @At("HEAD"),
         cancellable = true
     )
+
     public void ultimate_minecarts$addOtherFuels(Player player, InteractionHand hand, Vec3 hitPos,
                                               CallbackInfoReturnable<InteractionResult> info) {
             ItemStack stack = player.getItemInHand(hand);
-            FuelValues fuelValues = level().fuelValues();
 
             if (stack.is(Items.WATER_BUCKET) && fuel > 0) {
                 fuel = 0;
@@ -247,8 +278,10 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implem
                 return;
             }
 
-            if (!stack.isEmpty() && fuelValues.isFuel(stack)) {
-                int fuelTime = fuelValues.burnDuration(stack);
+            if (!stack.isEmpty() && stack.has(DataComponents.COOKING_FUEL) && level() instanceof ServerLevel serverLevel) {
+                int fuelTime = ResolvableInt.getFromItem(
+                    stack, DataComponents.COOKING_FUEL, CookingFuel::burnTime,
+                    ultimate_minecarts$getFuelLootContext(serverLevel), 0);
 
                 if (fuel >= UltimateMinecartsConfig.get().furnaceMaxBurnTime) {
                     info.setReturnValue(InteractionResult.SUCCESS);
@@ -266,10 +299,10 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implem
                 }
 
                 if (stack.getItem() instanceof BucketItem) {
-                    level().playSound(player, blockPosition(),
+                    serverLevel.playSound(null, blockPosition(),
                             SoundEvents.LAVA_EXTINGUISH,
                             SoundSource.BLOCKS, 0.5f, 0.8f + random.nextFloat() * 0.4f);
-                    level().playSound(player, blockPosition(),
+                    serverLevel.playSound(null, blockPosition(),
                             SoundEvents.BUCKET_EMPTY_LAVA,
                             SoundSource.BLOCKS, 1.0f, 1.0f);
                 }
@@ -277,23 +310,21 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implem
                 fuel = (int) Math.min(
                         UltimateMinecartsConfig.get().furnaceMaxBurnTime,
                         fuel + (fuelTime * 2));
-                if (level().isClientSide() && fuelTime > 0) {
-                    double scale = Math.min(5.0, Math.max(1.0, fuelTime / 1600.0));
-                    int particleCount = (int)(2 * scale);
 
-                    for (int i = 0; i < particleCount; i++) {
-                        level().addParticle(ParticleTypes.LAVA,
-                            getX() + (random.nextFloat() - 0.5) * 0.3 * scale,
-                            getY() + 0.4 + random.nextFloat() * 0.3,
-                            getZ() + (random.nextFloat() - 0.5) * 0.3 * scale,
-                            0.0, 0.0, 0.0);
-                    }
-                    level().playLocalSound(getX(), getY(), getZ(),
-                        SoundEvents.FIRECHARGE_USE, SoundSource.NEUTRAL,
-                        (float)(0.6 * Math.min(2.0, scale)),
-                        1.7f + random.nextFloat() * 0.3f,
-                        false);
+                double scale = Math.min(5.0, Math.max(1.0, fuelTime / 1600.0));
+                int particleCount = (int)(2 * scale);
+
+                for (int i = 0; i < particleCount; i++) {
+                    serverLevel.sendParticles(ParticleTypes.LAVA,
+                        getX() + (random.nextFloat() - 0.5) * 0.3 * scale,
+                        getY() + 0.4 + random.nextFloat() * 0.3,
+                        getZ() + (random.nextFloat() - 0.5) * 0.3 * scale,
+                        1, 0.0, 0.0, 0.0, 0.0);
                 }
+                serverLevel.playSound(null, getX(), getY(), getZ(),
+                    SoundEvents.FIRECHARGE_USE, SoundSource.NEUTRAL,
+                    (float)(0.6 * Math.min(2.0, scale)),
+                    1.7f + random.nextFloat() * 0.3f);
             }
 
             if (fuel > 0) {

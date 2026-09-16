@@ -7,4 +7,5 @@ public interface IFurnaceMinecart {
     int  ultimate_minecarts$getFuel();
     void ultimate_minecarts$setFuel(int fuel);
     void ultimate_minecarts$extinguish(Player player, ServerLevel serverLevel);
+    double ultimate_minecarts$getCurrentSpeed();
 }
