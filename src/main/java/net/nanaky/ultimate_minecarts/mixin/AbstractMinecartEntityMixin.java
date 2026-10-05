@@ -152,6 +152,12 @@ public abstract class AbstractMinecartEntityMixin extends Entity
         ultimate_minecarts$serverTick(serverLevel);
         if (!((Object) this instanceof MinecartFurnace) && getLinkedParent() == null) {
             double cap = UltimateMinecartsConfig.getOtherMinecartSpeed();
+            // Vanilla's legacy minecart movement ("OldMinecartBehavior#moveAlongTrack") multiplies the
+            // on-rail displacement of an occupied cart by 0.75, while this clamp pins the velocity at
+            // exactly the configured speed, so a ridden cart only travelled at 75% of it (e.g. 6 b/s
+            // with otherMinecartSpeed = 8). Compensate so the rider actually moves at the configured
+            // speed; the vanilla displacement clamp still keeps the cart from exceeding it.
+            if (isVehicle()) cap /= 0.75;
             Vec3 vel = getDeltaMovement();
             double speed = vel.horizontalDistance();
             if (speed > cap + 1e-5) {
