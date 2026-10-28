@@ -23,7 +23,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.minecart.MinecartFurnace;
 import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.item.component.CookingFuel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -34,12 +33,6 @@ import net.minecraft.world.level.block.PoweredRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
-import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
-import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
 import net.minecraft.world.phys.Vec3;
 
 import net.nanaky.ultimate_minecarts.UltimateMinecartsConfig;
@@ -133,22 +126,6 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecart implem
                 getZ() + (random.nextFloat() - 0.5) * 1.0,
                 1, 0.0, 0.08, 0.0, 0.0);
         }
-    }
-
-    @Unique
-    private LootContext ultimate_minecarts$getFuelLootContext(ServerLevel serverLevel) {
-        BlockPos pos = blockPosition();
-        BlockState furnaceState = Blocks.FURNACE.defaultBlockState();
-        FurnaceBlockEntity proxyFurnace = new FurnaceBlockEntity(pos, furnaceState);
-        return new LootContext.Builder(
-                new LootParams.Builder(serverLevel)
-                    .withParameter(LootContextParams.BLOCK_STATE, furnaceState)
-                    .withParameter(LootContextParams.BLOCK_ENTITY, proxyFurnace)
-                    .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-                    .withParameter(LootContextParams.CONTAINER, proxyFurnace)
-                    .create(LootContextParamSets.CONTAINER_PROCESS)
-            )
-            .create(Optional.empty());
     }
 
     @Unique
