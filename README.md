@@ -42,7 +42,7 @@
 - Toggle Collision Damage.
 - Toggle Fast Minecarts breaking other Minecarts.
 - Toggle Hopper Minecart overhaul.
-- Choose Furnace Burning Time (default: 72000).
+- Choose Furnace Burning Time (default: 32000).
 - Choose Furnace Minecart Max Speed (default: 32 blocks per second).
 - Choose other Minecarts Max speed (default: 16 blocks per second).
 
@@ -53,12 +53,12 @@
 **FUEL CONFIG**  
 
 Choose how much fuel each of the following sources adds or removes from the Furnace:
-- Water Bucket (default: 72000)
+- Water Bucket (default: 32000)
 - Water Bottle (default: 10000)
-- Lava Bucket (default: 30000)
-- Blaze Rod (default: 10000)
-- Coal Block (default: 25000)
-- Coal / Charcoal (default: 2500)
-- Log / Wood (default: 2000)
-- Plank (default: 500)
-- Stick (default: 250)
+- Lava Bucket (default: 32000)
+- Blaze Rod (default: 24000)
+- Coal Block (default: 16000)
+- Coal / Charcoal (default: 1600)
+- Log / Wood (default: 800)
+- Plank (default: 400)
+- Stick (default: 100)
