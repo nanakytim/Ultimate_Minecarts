@@ -95,31 +95,31 @@ public class UltimateMinecartsConfig {
     public int furnaceMaxBurnTime = 32000;
     
     @Comment("How much fuel one Lava Bucket adds.")
-    public int fuelLavaBucket = 30000;
+    public int fuelLavaBucket = 32000;
 
     @Comment("How much fuel one Blaze Rod adds.")
-    public int fuelBlazeRod = 10000;
+    public int fuelBlazeRod = 24000;
 
     @Comment("How much fuel one Block of Coal adds.")
-    public int fuelCoalBlock = 25000;
+    public int fuelCoalBlock = 16000;
 
     @Comment("How much fuel one Coal adds.")
-    public int fuelCoal = 2500;
+    public int fuelCoal = 1600;
 
     @Comment("How much fuel one Log or Wood adds.")
-    public int fuelLog = 2000;
+    public int fuelLog = 800;
 
     @Comment("How much fuel one Plank adds.")
-    public int fuelPlank = 1000;
+    public int fuelPlank = 400;
 
     @Comment("How much fuel one Stick adds.")
-    public int fuelStick = 250;
+    public int fuelStick = 100;
 
     @Comment("How much fuel one Water Bucket removes.")
-    public int waterBucket = 72000;
+    public int waterBucket = 32000;
 
     @Comment("How much fuel one Water Bottle removes.")
-    public int waterBottle = 10000;
+    public int waterBottle = 8000;
 
     public static UltimateMinecartsConfig get() {
         return INSTANCE;
